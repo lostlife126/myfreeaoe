@@ -12,6 +12,10 @@ public:
 	SDL_Window* gWindow = nullptr;
 	SDL_Surface* gScreenSurface = nullptr;
 	SDL_Renderer* gRenderer = nullptr;
+	TTF_Font* gFont = nullptr;
+
+	ResourceManager* resource_manager;
+	int pos_view_x, pos_view_y;
 
 	void setScreenResolution(int w, int h)
 	{
@@ -55,11 +59,25 @@ public:
 				}
 			}
 		}
+		if (TTF_Init() == -1)
+		{
+			printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
+			success = false;
+		}
+		else
+		{
+			gFont = TTF_OpenFont("Gothic_Titel_Offiziell.ttf", 32);
+
+		}
+
 		return success;
 	}
 
 	void close()
 	{
+
+		TTF_CloseFont(gFont);
+		gFont = nullptr;
 
 		//Destroy window    
 		SDL_FreeSurface(gScreenSurface);
@@ -71,6 +89,7 @@ public:
 		SDL_DestroyWindow(gWindow);
 		gWindow = nullptr;
 
+		TTF_Quit();
 		IMG_Quit();
 		SDL_Quit();
 	}
@@ -80,10 +99,13 @@ public:
 		close();
 	}
 
-	void draw(World* world, double dt)
+	void drawAll(World* world, double dt)
 	{
+		// main color is black
 		SDL_SetRenderDrawColor(gRenderer, 0x0, 0x0, 0x00, 0x0);
 		SDL_RenderClear(gRenderer);
+
+		// draw interface
 		SDL_Rect topLeftViewport;
 		topLeftViewport.x = 0;
 		topLeftViewport.y = 0;
@@ -91,6 +113,8 @@ public:
 		topLeftViewport.h = hScreen;
 		SDL_RenderSetViewport(gRenderer, &topLeftViewport);
 		resource_manager->textureInterface[0]->draw(gRenderer, 0, 0);
+
+		// draw main world
 		topLeftViewport.x = 0;
 		topLeftViewport.y = 25;
 		topLeftViewport.w = wScreen;
@@ -99,7 +123,25 @@ public:
 		drawTerrain(world);
 		drawObjects(world, dt);
 
+		// draw fps
+		std::stringstream ss;
+		ss.precision(3);
+		ss <<"FPS: "<< 1.0/dt;
+		drawText(ss.str(),1,1);
+
+		// draw all
 		SDL_RenderPresent(gRenderer);
+	}
+
+	void drawText(std::string text, int x, int y, int color=0)
+	{
+
+		SDL_Color textColor = { 255, 255, 0 };
+		SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, text.c_str(), textColor);
+		SDL_Texture* mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
+		SDL_Rect renderQuad = { x, y, textSurface->w, textSurface->h };
+		SDL_RenderCopyEx(gRenderer, mTexture, NULL, &renderQuad, NULL, NULL, SDL_FLIP_NONE);
+		SDL_DestroyTexture(mTexture);
 	}
 
 	void drawTerrain(World* world)
@@ -130,7 +172,7 @@ public:
 				tex[rr]->draw(gRenderer, posx, posy, iFrame);
 				pos++;
 			}
-		
+		// draw mesh lines
 		for (int i = 0; i < size_world_x; i++)
 		{
 			int posx0 = wScreen_half + (i) * size_tile_x_half - pos_view_x;
@@ -149,7 +191,7 @@ public:
 			SDL_RenderDrawLine(gRenderer, posx0, posy0, posx1, posy1);
 		}
 		
-
+		// draw (0,0) point (just for fun)
 		SDL_Rect fillRect = { -pos_view_x+wScreen_half-2, -pos_view_y-2, 5, 5 };
 		SDL_SetRenderDrawColor(gRenderer, 0xFF, 0x00, 0x00, 0xFF);
 		SDL_RenderFillRect(gRenderer, &fillRect);
@@ -177,13 +219,6 @@ public:
 			resource_manager->textureObject[obj->type]->draw(gRenderer, posx, posy, obj->dir, obj->now);
 
 		}
-
-
-
-
 	}
-
-	ResourceManager* resource_manager;
-	int pos_view_x, pos_view_y;
 
 };

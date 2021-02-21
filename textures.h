@@ -2,8 +2,10 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <sstream>
 #include "SDL.h"
 #include "SDL_image.h"
+#include "SDL_ttf.h"
 #include "glut.h"
 #include  <unordered_map>
 
@@ -111,7 +113,7 @@ public:
 			uint32_t pix_pos = (edges[i] & 0x0000ffff);
 			uint8_t addOff;
 			uint8_t dataAdd;
-			// TODO: доделать команды, сделать правильные цвета для игроков
+			// TODO: make right color of players
 			while (data != 0x0F)
 			{
 				memcpy(&data, &(buff[pos]), 1);
@@ -456,7 +458,6 @@ public:
 			}
 		}
 	}
-
 
 };
  

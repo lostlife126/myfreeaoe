@@ -10,11 +10,11 @@
 
 #include "renderer.h"
 
-// TODO: разобраться с текстами
+// TODO:
 // миникарта
 // не давать камере уезжать от карты
 // нормальное создание карты
-// причина тормозов до 60 фпс
+// причина тормозов до 60 фпс ???
 // смешивание разных областей
 
 
@@ -33,8 +33,7 @@ public:
 
 	Renderer* renderer;
 
-
-	Engine() :
+	Engine():
 		isRun{ false },
 		nCores{ SDL_GetCPUCount() } // число процов
 
@@ -45,18 +44,14 @@ public:
 		rm = new ResourceManager;
 		renderer->resource_manager = rm;
 		world = new World(32, 32);
-	//	world->setNormal();
 		world->setVoid();
-	//	world->setBase();
-		//world->setBaseland(1);
 		world->addObject(7, 1.1, 0.9);
-	//	world->addObject(1, 1.0, 0.0);
-	//	world->addObject(2, 0.75, 0.25);
 	}
 
 		~Engine()
 	{
-
+			delete renderer;
+			delete world;
 	}
 
 	void start() 
@@ -77,11 +72,13 @@ public:
 
 		while (isRun)
 		{
+			// for dt calc
 			tp2 = std::chrono::steady_clock::now();
 			std::chrono::duration<double> elapsedTime = tp2 - tp1;
 			tp1 = tp2;
 			dt = elapsedTime.count();
 
+			// action handler
 			while (SDL_PollEvent(&e) != 0)
 			{
 				if (e.type == SDL_QUIT)
@@ -168,7 +165,7 @@ public:
 	//		if (iter % 8 == 0)
 //			    world->unit[0]->frameNow++;
 
-			renderer->draw(world, dt);
+			renderer->drawAll(world, dt);
 			iter++;
 		//	std::cout << "fps = " << 1.0 / dt << std::endl;
 		}
