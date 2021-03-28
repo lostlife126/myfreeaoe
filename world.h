@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "textures.h"
 
 enum TypeTiles
 {
@@ -128,6 +129,7 @@ public:
 	double precip;
 	double humid;
 
+	/*
 	void calcType()
 	{
 	//	humid = precip / (59.0 * temper);
@@ -146,6 +148,7 @@ public:
 		if (hei < -64.0)
 			type = TypeTiles::DEEPWATER;
 	}
+	*/
 
 	Tile(int t_):
 		type(t_),
@@ -161,12 +164,18 @@ public:
 class Object
 {
 public:
-	int type;
-	double posX;
-	double posY;
-	double now = 0.0;
+	int frameObject;
+	double posX = 0; // position on map
+	double posY = 0; // position on map
+
+	double now = 0.0; // frame duration now
 	int dir = 0; // 0 - вниз, 1 - влево вниз, 2 - влево, 3 - вверх влево, -1 - вправо вниз и тд
 	int action = 0; // 0 - stand, 1 - walk, 2 - attack, 3 - die, 4 - decay
+
+
+	Object()
+	{}
+
 
 	void turnLeft()
 	{
@@ -181,12 +190,62 @@ public:
 			dir = 4;
 	}
 
+	void walk(double dt)
+	{
+		action = 1;
+		double dx, dy;
+		if (dir == 0)
+		{
+			dx = 0.7;
+			dy = 0.7;
+		}
+		else if (dir == 1)
+		{
+			dx = 0.0;
+			dy = 1.0;
+		}
+		else if (dir == 2)
+		{
+			dx = -0.7;
+			dy = 0.7;
+		}
+		else if (dir == 3)
+		{
+			dx = -1.0;
+			dy = 0.0;
+		}
+		else if(dir == 4)
+		{
+			dx = -0.7;
+			dy = -0.7;
+		}
+		else if (dir == -1)
+		{
+			dx = 1.0;
+			dy = 0.0;
+		}
+		else if (dir == -2)
+		{
+			dx = 0.7;
+			dy = -0.7;
+		}
+		else if (dir == -3)
+		{
+			dx = 0.0;
+			dy = -1.0;
+		}
+
+		posX += dx * dt;
+		posY += dy * dt;
+	}
+
 	void update(double dt)
 	{
 		now += dt;
 	}
 };
 
+/*
 class Unit : public Object
 {
 public:
@@ -194,7 +253,7 @@ public:
 
 	Unit(int type_, double x_, double y_)
 	{
-		type = type_;
+		graph_now = type_;
 		posX = x_;
 		posY = y_;
 		slp_action[0] = 7;
@@ -203,11 +262,10 @@ public:
 		slp_action[3] = 10;
 		slp_action[4] = 11;
 	}
-
-
-
 };
+*/
 
+/*
 double linear(double a, double b, double x);
 
 class Perlin2D
@@ -291,28 +349,38 @@ public:
 		}
 	}
 };
+*/
 
 class World
 {
 public:
 
-	const int TILE_SIZEx = 96;
-	const int TILE_SIZEy = 48;
 	int w;
 	int h;
 	int num_tiles;
 	int num_objects;
 	double time_now = 0.0;
+	int iter = 0;
 
 	std::vector<Tile> tile;
-	std::vector<Object*> object; // units (human), buildings (walls, homes), resource (trees, bush), machines (carts, boats), other (???)
+	std::vector<Object*> object; // units (human), buildings (walls, houses), resource (trees, bush), machines (carts, ships), other (???)
 
-	World(int w_, int h_) :
+	World(int w_, int h_):
 		w(w_),
 		h(h_)
 	{
 		num_tiles = w * h;
 		tile.resize(num_tiles);
+	}
+
+	void updateAll(double dt)
+	{
+		for (uint32_t i = 0; i < object.size(); i++)
+		{
+			object[i]->update(dt);
+		}
+		time_now += dt;
+		iter++;
 	}
 	/*
 	void setw()
@@ -417,9 +485,12 @@ public:
 
 	void addObject(int t_, double x_, double y_)
 	{
-		x_ = int(x_) + 0.5;
-		y_ = int(y_) + 0.5;
-		object.push_back(new Unit(t_,x_, y_));
+		x_ = (x_) + 0.5;
+		y_ = (y_) + 0.5;
+		object.push_back(new Object);
+		object.back()->frameObject = t_;
+		object.back()->posX = x_;
+		object.back()->posY = y_;
 		num_objects++;
 	}
 

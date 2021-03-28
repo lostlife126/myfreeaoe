@@ -1,9 +1,32 @@
 #include "textures.h"
 #include "world.h"
 
+
+class ObjectGraph
+{
+public:
+
+	std::string caption;
+	int id_tex[5];
+
+	ObjectGraph(const char* c, int a0, int a1, int a2, int a3, int a4)
+	{
+		caption = c;
+		id_tex[0] = a0;
+		id_tex[1] = a1;
+		id_tex[2] = a2;
+		id_tex[3] = a3;
+		id_tex[4] = a4;
+	}
+};
+
+
 class Renderer
 {
 public:
+
+	const int TILE_SIZEx = 96;
+	const int TILE_SIZEy = 48;
 
 	int wScreen = 800;
 	int hScreen = 600;
@@ -13,8 +36,14 @@ public:
 	SDL_Surface* gScreenSurface = nullptr;
 	SDL_Renderer* gRenderer = nullptr;
 	TTF_Font* gFont = nullptr;
+	Palette palette;
 
-	ResourceManager* resource_manager;
+	std::vector<TextureTerrain*> textureTerrain;
+	std::vector<TextureInterface*> textureInterface;
+	std::vector<TextureObject*> textureObject;
+
+	std::vector<ObjectGraph*> objectGraph;
+
 	int pos_view_x, pos_view_y;
 
 	void setScreenResolution(int w, int h)
@@ -23,6 +52,62 @@ public:
 		hScreen = h;
 		close();
 		init();
+	}
+
+	void loadTextures()
+	{
+		palette.setAge2();
+		textureInterface.push_back(new TextureInterface);
+		textureInterface[0]->id_slp = 51117;
+
+		textureTerrain.push_back(new TextureTerrain("shallow", 15014, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("shallow_water", 15002, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("water", 15016, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("deep_water", 15015, 10, 0));
+
+		textureTerrain.push_back(new TextureTerrain("dirt", 15000, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("grass1", 15006, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("grass2", 15007, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("grass3", 15001, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("grass4", 15009, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("grass5", 15008, 10, 0));
+
+		textureTerrain.push_back(new TextureTerrain("road", 15018, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("broken_road", 15019, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("snow_road", 15030, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("moss_road", 15031, 10, 0));
+
+		textureTerrain.push_back(new TextureTerrain("farm0", 15021, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("farm1", 15022, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("farm2", 15023, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("farm3", 15004, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("farm_dead", 15005, 10, 0));
+
+		textureTerrain.push_back(new TextureTerrain("beach", 15017, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("desert", 15010, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("leaves", 15011, 10, 0));
+
+		textureTerrain.push_back(new TextureTerrain("ice", 15024, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("snow", 15026, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("snow_dirt", 15027, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("snow_grass1", 15028, 10, 0));
+		textureTerrain.push_back(new TextureTerrain("snow_grass2", 15029, 10, 0));
+
+		textureObject.push_back(new TextureObject("bamboo", 2293, 1, 13));// bamboo
+		textureObject.push_back(new TextureObject("oak", 4652, 1, 13));// oak forest tree
+		textureObject.push_back(new TextureObject("pine", 4654, 1, 13));// pine
+		textureObject.push_back(new TextureObject("palm", 4653, 1, 13));// palm
+		textureObject.push_back(new TextureObject("snow_pine", 4731, 1, 13));// snow pine
+		textureObject.push_back(new TextureObject("jungle", 4728, 1, 13));// jungle
+		textureObject.push_back(new TextureObject("cactus", 4475, 1, 13));// cactus
+
+		textureObject.push_back(new TextureObject("archer_s", 8, 10, 8, 2.0));// archer stand
+		textureObject.push_back(new TextureObject("archer_w", 12, 10, 8, 0.6975));// archer walk
+		textureObject.push_back(new TextureObject("archer_a", 2, 10, 8, 0.7));// archer attack
+		textureObject.push_back(new TextureObject("archer_d", 5, 10, 8, 1.0));// archer die
+		textureObject.push_back(new TextureObject("archer_c", 9, 10, 8));// archer corpse
+
+		objectGraph.push_back(new ObjectGraph("archer", 7, 8, 9, 10, 11)); // archer
 	}
 
 	bool init()
@@ -70,6 +155,8 @@ public:
 
 		}
 
+		loadTextures();
+
 		return success;
 	}
 
@@ -112,7 +199,7 @@ public:
 		topLeftViewport.w = wScreen;
 		topLeftViewport.h = hScreen;
 		SDL_RenderSetViewport(gRenderer, &topLeftViewport);
-		resource_manager->textureInterface[0]->draw(gRenderer, 0, 0);
+		textureInterface[0]->draw(gRenderer, 0, 0);
 
 		// draw main world
 		topLeftViewport.x = 0;
@@ -121,7 +208,7 @@ public:
 		topLeftViewport.h = 430;
 		SDL_RenderSetViewport(gRenderer, &topLeftViewport);
 		drawTerrain(world);
-		drawObjects(world, dt);
+		drawObjects(world);
 
 		// draw fps
 		std::stringstream ss;
@@ -133,10 +220,9 @@ public:
 		SDL_RenderPresent(gRenderer);
 	}
 
-	void drawText(std::string text, int x, int y, int color=0)
+	void drawText(std::string text, int x, int y, int color=255)// todo: сделать цвет из палитры
 	{
-
-		SDL_Color textColor = { 255, 255, 0 };
+		SDL_Color textColor = palette.color[color];
 		SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, text.c_str(), textColor);
 		SDL_Texture* mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
 		SDL_Rect renderQuad = { x, y, textSurface->w, textSurface->h };
@@ -146,14 +232,13 @@ public:
 
 	void drawTerrain(World* world)
 	{
-		int size_tile_x_half = world->TILE_SIZEx / 2;
-		int size_tile_y_half = world->TILE_SIZEy / 2;
-		int size_tile_x = world->TILE_SIZEx;
-		int size_tile_y = world->TILE_SIZEy;
+		int size_tile_x_half = TILE_SIZEx / 2;
+		int size_tile_y_half = TILE_SIZEy / 2;
+		int size_tile_x = TILE_SIZEx;
+		int size_tile_y = TILE_SIZEy;
 		int size_world_x = world->w;
 		int size_world_y = world->h;
 		int wScreen_half = wScreen / 2;
-		auto& tex = resource_manager->textureTerrain;
 		int pos = 0;
 		for (int i = 0; i < size_world_x; i++)
 			for (int j = 0; j < size_world_y; j++)
@@ -169,7 +254,7 @@ public:
 				int iFr = i % 10;
 				int jFr = j % 10;
 				int iFrame = iFr * 10 + 9 - jFr; // begin - right corner
-				tex[rr]->draw(gRenderer, posx, posy, iFrame);
+				textureTerrain[rr]->draw(gRenderer, posx, posy, iFrame);
 				pos++;
 			}
 		// draw mesh lines
@@ -197,27 +282,25 @@ public:
 		SDL_RenderFillRect(gRenderer, &fillRect);
 	}
 
-	void drawObjects(World* world, double dt)
+	void drawObjects(World* world)// todo: сделать чтобы рисовался цвет игрока
 	{
-		int size_tile_x_half = world->TILE_SIZEx / 2;
-		int size_tile_y_half = world->TILE_SIZEy / 2;
+		int size_tile_x_half = TILE_SIZEx / 2;
+		int size_tile_y_half = TILE_SIZEy / 2;
 		int wScreen_half = wScreen / 2;
 		for (int i = 0; i < world->num_objects; i++)
 		{
 			auto& obj = world->object[i];
-			obj->update(dt);
-			if (obj->now > resource_manager->textureObject[obj->type]->anim_duration)
-			{
-				obj->now -= resource_manager->textureObject[obj->type]->anim_duration;
-			}
+			auto& graph = objectGraph[obj->frameObject];
+			auto& tex = textureObject[graph->id_tex[obj->action]];
+			if (obj->now > tex->anim_duration) // todo в будущем надо убрать отсюда
+				obj->now -= tex->anim_duration;
 			int posx = wScreen_half + (obj->posX - obj->posY) * size_tile_x_half - pos_view_x;
 			int posy = (obj->posX + obj->posY) * size_tile_y_half - pos_view_y;
 			if ((posx < -size_tile_x_half * 2) || (posx > wScreen) || (posy < -size_tile_y_half * 2) || (posy > hScreen))
 			{
 				continue;
 			}
-			resource_manager->textureObject[obj->type]->draw(gRenderer, posx, posy, obj->dir, obj->now);
-
+			tex->draw(gRenderer, posx, posy, obj->dir, obj->now);
 		}
 	}
 
