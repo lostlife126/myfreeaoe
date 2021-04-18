@@ -20,7 +20,7 @@ public:
 	}
 };
 
-
+//// TODO: i must try directX or opengl!!!!!!!
 class Renderer
 {
 public:
@@ -52,6 +52,37 @@ public:
 		hScreen = h;
 		close();
 		init();
+	}
+
+	void drawTextureTer(int iTex, int x, int y, int i, int j)
+	{
+		auto& tex = textureTerrain[iTex];
+		int iFr = i % tex->num_dim;
+		int jFr = j % tex->num_dim;
+		int iFrame = iFr * tex->num_dim + (tex->num_dim - 1) - jFr; // begin - right corner
+
+		if (tex->id_slp == -1)
+			return;
+		tex->load();
+		SDL_Rect renderQuad;
+		FrameSLP* frame = tex->slp->frame[iFrame];
+
+		SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom((void*)(tex->slp->frame[iFrame]->picture), tex->slp->frame[iFrame]->width, tex->slp->frame[iFrame]->height,
+			8, tex->slp->frame[iFrame]->width, SDL_PIXELFORMAT_INDEX8);
+		SDL_SetColorKey(surface, SDL_TRUE, 255);
+
+		for (int j = 0; j < 256; j++)
+		{
+			surface->format->palette->colors[j] = palette.color[j];
+		}
+
+		SDL_Texture* mTexture = SDL_CreateTextureFromSurface(gRenderer, surface);
+
+		SDL_SetTextureBlendMode(mTexture, SDL_BLENDMODE_BLEND);
+		renderQuad = { x - frame->hotspot_x, y - frame->hotspot_y, frame->width, frame->height };
+		SDL_RenderCopyEx(gRenderer, mTexture, NULL, &renderQuad, NULL, NULL, SDL_FLIP_NONE);
+		SDL_DestroyTexture(mTexture);
+		SDL_FreeSurface(surface);
 	}
 
 	void loadTextures()
@@ -112,14 +143,12 @@ public:
 
 	bool init()
 	{
-		bool success = true;
-
 		//Create window
 		gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, wScreen, hScreen, SDL_WINDOW_SHOWN);
 		if (gWindow == nullptr)
 		{
 			printf("Window could not be created! SDL Error: %s\n", SDL_GetError());
-			success = false;
+			return false;
 		}
 		else
 		{
@@ -128,7 +157,7 @@ public:
 			if (gRenderer == nullptr)
 			{
 				printf("Renderer could not be created! SDL Error: %s\n", SDL_GetError());
-				success = false;
+				return false;
 			}
 			else
 			{
@@ -140,24 +169,28 @@ public:
 				if (!(IMG_Init(imgFlags) & imgFlags))
 				{
 					printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
-					success = false;
+					return false;
 				}
 			}
 		}
 		if (TTF_Init() == -1)
 		{
 			printf("SDL_ttf could not initialize! SDL_ttf Error: %s\n", TTF_GetError());
-			success = false;
+			return false;
 		}
 		else
 		{
 			gFont = TTF_OpenFont("Gothic_Titel_Offiziell.ttf", 32);
-
+			if (gFont == nullptr)
+			{
+				printf("Font not found!\n");
+				return false;
+			}
 		}
 
 		loadTextures();
 
-		return success;
+		return true;
 	}
 
 	void close()
@@ -251,13 +284,12 @@ public:
 					continue;
 				}
 				int rr = world->tile[pos].type;
-				int iFr = i % 10;
-				int jFr = j % 10;
-				int iFrame = iFr * 10 + 9 - jFr; // begin - right corner
-				textureTerrain[rr]->draw(gRenderer, posx, posy, iFrame);
+			//	textureTerrain[rr]->draw(gRenderer, &palette, posx, posy, i, j);
+				drawTextureTer(rr, posx, posy, i, j);
 				pos++;
 			}
 		// draw mesh lines
+		/*
 		for (int i = 0; i < size_world_x; i++)
 		{
 			int posx0 = wScreen_half + (i) * size_tile_x_half - pos_view_x;
@@ -275,6 +307,7 @@ public:
 			int posy1 = (i + size_world_x) * size_tile_y_half - pos_view_y;
 			SDL_RenderDrawLine(gRenderer, posx0, posy0, posx1, posy1);
 		}
+		*/
 		
 		// draw (0,0) point (just for fun)
 		SDL_Rect fillRect = { -pos_view_x+wScreen_half-2, -pos_view_y-2, 5, 5 };
@@ -303,5 +336,11 @@ public:
 			tex->draw(gRenderer, posx, posy, obj->dir, obj->now);
 		}
 	}
+
+
+
+
+
+
 
 };

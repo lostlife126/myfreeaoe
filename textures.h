@@ -49,7 +49,7 @@ public:
 	int32_t hotspot_x;
 	int32_t hotspot_y;
 	uint8_t* picture = nullptr;
-	SDL_Surface* surface = nullptr;
+	SDL_Surface* surface = nullptr; // may be it must be expeled from here
 
 	~FrameSLP();
 	void free();
@@ -58,7 +58,7 @@ public:
 };
 
 class FileSLP
-{
+{ 
 public:
 	std::vector<FrameSLP*> frame;
 
@@ -74,7 +74,6 @@ class FileBINA
 public:
 	void* buff;
 	uint32_t size;
-
 };
 
 class FileWAV
@@ -110,7 +109,7 @@ public:
 	int num_dim = 1;
 	uint8_t minimap_color = 0;
 
-	TextureTerrain(const char* c, int id, int dims, uint8_t color):
+	TextureTerrain(const char* c, int id, int dims, uint8_t color=0):
 		Texture(c,id),
 		num_dim(dims),
 		minimap_color(color)
@@ -123,12 +122,47 @@ public:
 		load();
 		SDL_Rect renderQuad;
 		FrameSLP* frame = slp->frame[iFrame];
+
 		SDL_Texture* mTexture = SDL_CreateTextureFromSurface(ren, frame->surface);
 
 		SDL_SetTextureBlendMode(mTexture, SDL_BLENDMODE_BLEND);
 		renderQuad = { x - frame->hotspot_x, y - frame->hotspot_y, frame->width, frame->height };
 		SDL_RenderCopyEx(ren, mTexture, NULL, &renderQuad, NULL, NULL, SDL_FLIP_NONE);
 		SDL_DestroyTexture(mTexture);
+	}
+
+	void draw2(SDL_Renderer* ren, Palette* pal, int x, int y, int iFrame = 0) // here we create and delete surface every times
+	{
+		if (id_slp == -1)
+			return;
+		load();
+		SDL_Rect renderQuad;
+		FrameSLP* frame = slp->frame[iFrame];
+
+		SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom((void*)(slp->frame[iFrame]->picture), slp->frame[iFrame]->width, slp->frame[iFrame]->height,
+			8, slp->frame[iFrame]->width, SDL_PIXELFORMAT_INDEX8);
+		SDL_SetColorKey(surface, SDL_TRUE, 255);
+
+		for (int j = 0; j < 256; j++)
+		{
+			surface->format->palette->colors[j] = pal->color[j];
+		}
+
+		SDL_Texture* mTexture = SDL_CreateTextureFromSurface(ren, surface);
+
+		SDL_SetTextureBlendMode(mTexture, SDL_BLENDMODE_BLEND);
+		renderQuad = { x - frame->hotspot_x, y - frame->hotspot_y, frame->width, frame->height };
+		SDL_RenderCopyEx(ren, mTexture, NULL, &renderQuad, NULL, NULL, SDL_FLIP_NONE);
+		SDL_DestroyTexture(mTexture);
+		SDL_FreeSurface(surface);
+	}
+
+	void draw(SDL_Renderer* ren, Palette* pal, int x, int y, int i, int j)
+	{
+		int iFr = i % num_dim;
+		int jFr = j % num_dim;
+		int iFrame = iFr * num_dim + (num_dim - 1) - jFr; // begin - right corner
+		draw2(ren, pal, x, y, iFrame);
 	}
 };
 
@@ -138,16 +172,16 @@ public:
 
 	int frames_per_angles = 1;
 	int directions = 1;
-	double anim_duration;
+	float anim_duration;
 
-	TextureObject(const char* c, int id, int fpa=1, int dirs=0, double dur=0.0):
+	TextureObject(const char* c, int id, int fpa=1, int dirs=0, float dur=0.0):
 		Texture(c,id),
 		frames_per_angles(fpa),
 		directions(dirs),
 		anim_duration(dur)
 	{}
 	
-	void draw(SDL_Renderer* ren, int x, int y, int dir = 0, double now = 0.0)
+	void draw(SDL_Renderer* ren, int x, int y, int dir = 0, float now = 0.0)
 	{
 		if (id_slp == -1)
 			return;

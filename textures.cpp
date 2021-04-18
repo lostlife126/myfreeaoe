@@ -262,111 +262,103 @@ FrameSLP::FrameSLP(char* buff, int pos)
 
 
 
-	void FileSLP::load(char* buff)
+void FileSLP::load(char* buff)
+{
+	struct
 	{
-		struct
-		{
-			char version[4];
-			uint32_t nFrames;
-			char comment[24];
-		} header;
-		memcpy(&header, buff, 32);
-		frame.resize(header.nFrames);
+		char version[4];
+		uint32_t nFrames;
+		char comment[24];
+	} header;
+	memcpy(&header, buff, 32);
+	frame.resize(header.nFrames);
+	for (uint32_t i = 0; i < frame.size(); i++)
+	{
+		frame[i] = new FrameSLP(buff, (i + 1) * 32);
+	}
+}
 
-		for (uint32_t i = 0; i < frame.size(); i++)
-		{
-			frame[i] = new FrameSLP(buff, (i + 1) * 32);
-		}
+void FileSLP::setPalette(Palette* pal)
+{
+	for (int j = 0; j < 256; j++)
+	{
+		frame[0]->surface->format->palette->colors[j] = pal->color[j];
+	}
+	for (int i = 1; i < frame.size(); i++)
+	{
+		frame[i]->surface->format = frame[0]->surface->format;
+	}
+}
+
+void Texture::load()
+{
+	if ((slp != nullptr) || (id_slp == -1))
+		return;
+
+	std::string path;
+	if (id_slp < 15000)
+	{
+		path = "graphics.drs";
+	}
+	else if (id_slp < 50000)
+	{
+		path = "terrain.drs";
+	}
+	else
+	{
+		path = "interfac.drs";
 	}
 
-	void FileSLP::setPalette(Palette* pal)
+	std::fstream file;
+	file.open(path, std::ios::binary | std::ios::in);
+	file.seekg(0, std::ios::end);
+	file.seekg(0, std::ios::beg);
+	struct
 	{
-		for (int j = 0; j < 256; j++)
-		{
-			frame[0]->surface->format->palette->colors[j] = pal->color[j];
-		}
-		for (int i = 1; i < frame.size(); i++)
-		{
-			frame[i]->surface->format = frame[0]->surface->format;
-		}
-	}
-
-
-
-	void Texture::load()
+		char info[40];
+		char version[4];
+		char file_type[12];
+		int num_tables;
+		int offset_first;
+	}header_drs;
+	struct
 	{
-		if (slp != nullptr)
+		char ext[4];
+		int offset;
+		int num_files;
+	}header_table;
+	struct
+	{
+		int id_file;
+		int offset;
+		int size;
+	}headerFile;
+	file.read(reinterpret_cast<char*>(&header_drs), 64);
+	for (int i = 0; i < header_drs.num_tables; i++)
+	{
+		file.read(reinterpret_cast<char*>(&header_table), 12);
+		if (header_table.ext[1] == 'p' && header_table.ext[2] == 'l' && header_table.ext[3] == 's')
 		{
-			return;
-		}
-
-		if (id_slp == -1)
-		{
-			return;
-		}
-		std::string path;
-		if (id_slp < 15000)
-		{
-			path = "graphics.drs";
-		}
-		else if (id_slp < 50000)
-		{
-			path = "terrain.drs";
-		}
-		else
-		{
-			path = "interfac.drs";
-		}
-
-		std::fstream file;
-		file.open(path, std::ios::binary | std::ios::in);
-		file.seekg(0, std::ios::end);
-		file.seekg(0, std::ios::beg);
-		struct
-		{
-			char info[40];
-			char version[4];
-			char file_type[12];
-			int num_tables;
-			int offset_first;
-		}header_drs;
-		struct
-		{
-			char ext[4];
-			int offset;
-			int num_files;
-		}header_table;
-		struct
-		{
-			int id_file;
-			int offset;
-			int size;
-		}headerFile;
-		file.read(reinterpret_cast<char*>(&header_drs), 64);
-		for (int i = 0; i < header_drs.num_tables; i++)
-		{
-			file.read(reinterpret_cast<char*>(&header_table), 12);
-			if (header_table.ext[1] == 'p' && header_table.ext[2] == 'l' && header_table.ext[3] == 's')
+			file.seekg(header_table.offset, std::ios::beg);
+			for (int j = 0; j < header_table.num_files; j++)
 			{
-				file.seekg(header_table.offset, std::ios::beg);
-				for (int j = 0; j < header_table.num_files; j++)
+				file.read(reinterpret_cast<char*>(&headerFile), 12);
+				if (headerFile.id_file == id_slp)
 				{
-					file.read(reinterpret_cast<char*>(&headerFile), 12);
-					if (headerFile.id_file == id_slp)
-					{
-						Palette pal_;
-						pal_.setAge2();
-						slp = new FileSLP;
-						char* buff = new char[headerFile.size];
-						file.seekg(headerFile.offset, std::ios::beg);
-						file.read(buff, headerFile.size);
-						slp->load(buff);
-						slp->setPalette(&pal_);
-						delete[] buff;
-						file.close();
-						return;
-					}
+					Palette pal_;
+					pal_.setAge2();
+					slp = new FileSLP;
+					char* buff = new char[headerFile.size];
+					file.seekg(headerFile.offset, std::ios::beg);
+					file.read(buff, headerFile.size);
+					slp->load(buff);
+					slp->setPalette(&pal_);
+					delete[] buff;
+					file.close();
+					return;
 				}
 			}
 		}
 	}
+}
+
