@@ -41,7 +41,7 @@ public:
 		isRun{ false },
 		nCores{ SDL_GetCPUCount() } // число процов
 	{
-		renderer = new Renderer;
+		renderer = new RendererSDL;
 		renderer->init();
 
 		world = new World(32, 32);
@@ -153,10 +153,10 @@ public:
 				{
 					int x, y;
 					SDL_GetMouseState(&x, &y);
-					x = x - renderer->wScreen / 2 + renderer->pos_view_x; -renderer->TILE_SIZEx / 2;
-					y = y + renderer->pos_view_y - renderer->TILE_SIZEy / 2;
-					double xx = (1.0 * x) / renderer->TILE_SIZEx;
-					double yy = (1.0 * y) / renderer->TILE_SIZEy;
+					x = x - renderer->wScreen / 2 + renderer->pos_view_x; - renderer->TILE_SIZEX / 2;
+					y = y + renderer->pos_view_y - renderer->TILE_SIZEY / 2;
+					double xx = (1.0 * x) / renderer->TILE_SIZEX;
+					double yy = (1.0 * y) / renderer->TILE_SIZEY;
 
 					int i = (yy + xx);
 					int j = yy - xx;
@@ -200,6 +200,7 @@ public:
 
 			std::stringstream ss;
 		//	ss.precision(3);
+			
 			ss << "time: " << world->time_now;
 			renderer->drawText(ss.str(), 1, 20);
 			ss.precision(3);
@@ -215,12 +216,12 @@ public:
 			ss.str("");
 			ss << "time render: " << dt_render / dt * 100.0;
 			renderer->drawText(ss.str(), 1, 100);
-
+			
 			ss.str("");
 			ss << "(" << renderer->pos_view_x<<", "<< renderer->pos_view_y<<")";
 			renderer->drawText(ss.str(), 690, 1);
 
-			SDL_RenderPresent(renderer->gRenderer);
+		//	SDL_RenderPresent(renderer->gRenderer);
 			double t4 = omp_get_wtime();
 			dt_input = t1 - t0;
 			dt_update = t2 - t1;
@@ -229,8 +230,8 @@ public:
 			dt = t4 - t0;
 			if (dt < 1.0/max_fps)
 			{
-				SDL_Delay((1.0 / max_fps - dt)*1000.0);
-				dt = 1.0 / max_fps;
+			//	SDL_Delay((1.0 / max_fps - dt)*1000.0);
+			//	dt = 1.0 / max_fps;
 			}
 		}
 	}

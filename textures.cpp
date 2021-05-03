@@ -11,9 +11,7 @@ void FrameSLP::free()
 	if (picture != nullptr)
 	{
 		delete[] picture;
-		SDL_FreeSurface(surface);
 		picture = nullptr;
-		surface = nullptr;
 	}
 }
 
@@ -255,9 +253,6 @@ FrameSLP::FrameSLP(char* buff, int pos)
 	}
 	delete[] edges;
 	delete[] cmdTable;
-	surface = SDL_CreateRGBSurfaceWithFormatFrom((void*)picture, width, height,
-			8, width, SDL_PIXELFORMAT_INDEX8);
-	SDL_SetColorKey(surface, SDL_TRUE, 255);
 }
 
 
@@ -275,18 +270,6 @@ void FileSLP::load(char* buff)
 	for (uint32_t i = 0; i < frame.size(); i++)
 	{
 		frame[i] = new FrameSLP(buff, (i + 1) * 32);
-	}
-}
-
-void FileSLP::setPalette(Palette* pal)
-{
-	for (int j = 0; j < 256; j++)
-	{
-		frame[0]->surface->format->palette->colors[j] = pal->color[j];
-	}
-	for (int i = 1; i < frame.size(); i++)
-	{
-		frame[i]->surface->format = frame[0]->surface->format;
 	}
 }
 
@@ -345,14 +328,11 @@ void Texture::load()
 				file.read(reinterpret_cast<char*>(&headerFile), 12);
 				if (headerFile.id_file == id_slp)
 				{
-					Palette pal_;
-					pal_.setAge2();
 					slp = new FileSLP;
 					char* buff = new char[headerFile.size];
 					file.seekg(headerFile.offset, std::ios::beg);
 					file.read(buff, headerFile.size);
 					slp->load(buff);
-					slp->setPalette(&pal_);
 					delete[] buff;
 					file.close();
 					return;

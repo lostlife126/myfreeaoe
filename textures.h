@@ -2,44 +2,6 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include <sstream>
-#include "SDL.h"
-#include "SDL_image.h"
-#include "SDL_ttf.h"
-#include "glut.h"
-
-
-class Palette
-{
-public:
-
-	std::vector<SDL_Color> color;
-
-	Palette()
-	{}
-
-	void setAge2()
-	{
-		std::fstream file("pal7.txt", std::ios::in);// 7 for terrain
-		color.resize(256);
-
-		for (int i = 0; i < 256; i++)
-		{
-			SDL_Color c;
-			int temp;
-			file >> temp;
-			c.r = temp;
-			file >> temp;
-			c.g = temp;
-			file >> temp;
-			c.b = temp;
-			c.a = 255;
-			color[i] = c;
-		}
-		file.close();
-	}
-
-};
 
 class FrameSLP
 {
@@ -49,7 +11,6 @@ public:
 	int32_t hotspot_x;
 	int32_t hotspot_y;
 	uint8_t* picture = nullptr;
-	SDL_Surface* surface = nullptr; // may be it must be expeled from here
 
 	~FrameSLP();
 	void free();
@@ -65,8 +26,6 @@ public:
 	FileSLP() {}
 
 	void load(char* buff);
-
-	void setPalette(Palette* pal);
 };
 
 class FileBINA
@@ -115,6 +74,7 @@ public:
 		minimap_color(color)
 	{}
 
+	/*
 	void draw(SDL_Renderer* ren, int x, int y, int iFrame = 0)
 	{
 		if (id_slp == -1)
@@ -164,6 +124,7 @@ public:
 		int iFrame = iFr * num_dim + (num_dim - 1) - jFr; // begin - right corner
 		draw2(ren, pal, x, y, iFrame);
 	}
+	*/
 };
 
 class TextureObject : public Texture
@@ -180,6 +141,8 @@ public:
 		directions(dirs),
 		anim_duration(dur)
 	{}
+
+	/*
 	
 	void draw(SDL_Renderer* ren, int x, int y, int dir = 0, float now = 0.0)
 	{
@@ -214,7 +177,7 @@ public:
 		}
 		SDL_DestroyTexture(mTexture);
 	}
-	
+	*/
 };
 
 class TextureInterface: public Texture
@@ -225,6 +188,8 @@ public:
 	{
 		id_slp = -1;
 	}
+
+	/*
 
 	void draw(SDL_Renderer* ren, int x, int y, int iFrame = 0)
 	{
@@ -241,4 +206,5 @@ public:
 		SDL_DestroyTexture(mTexture);
 	}
 
+	*/
 };

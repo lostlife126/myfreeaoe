@@ -1,91 +1,73 @@
 #include "textures.h"
 #include "world.h"
+#include "SDL.h"
+#include "SDL_image.h"
+#include "SDL_ttf.h"
+#include "glut.h"
 
 
-class ObjectGraph
+class Palette
 {
 public:
 
-	std::string caption;
-	int id_tex[5];
+	std::vector<SDL_Color> color;
 
-	ObjectGraph(const char* c, int a0, int a1, int a2, int a3, int a4)
+	Palette()
+	{}
+
+	void setAge2()
 	{
-		caption = c;
-		id_tex[0] = a0;
-		id_tex[1] = a1;
-		id_tex[2] = a2;
-		id_tex[3] = a3;
-		id_tex[4] = a4;
+		std::fstream file("pal7.txt", std::ios::in);// 7 for terrain
+		color.resize(256);
+
+		for (int i = 0; i < 256; i++)
+		{
+			SDL_Color c;
+			int temp;
+			file >> temp;
+			c.r = temp;
+			file >> temp;
+			c.g = temp;
+			file >> temp;
+			c.b = temp;
+			c.a = 255;
+			color[i] = c;
+		}
+		file.close();
 	}
+
 };
 
-//// TODO: i must try directX or opengl!!!!!!!
 class Renderer
 {
 public:
-
-	const int TILE_SIZEx = 96;
-	const int TILE_SIZEy = 48;
+	const int TILE_SIZEX = 96;
+	const int TILE_SIZEY = 48;
+	const int HALF_TILE_SIZEX = TILE_SIZEX / 2;
+	const int HALF_TILE_SIZEY = TILE_SIZEY / 2;
 
 	int wScreen = 800;
 	int hScreen = 600;
 	int dColor = 32;
 
-	SDL_Window* gWindow = nullptr;
-	SDL_Surface* gScreenSurface = nullptr;
-	SDL_Renderer* gRenderer = nullptr;
-	TTF_Font* gFont = nullptr;
-	Palette palette;
-
+	// todo: make class resource manager
 	std::vector<TextureTerrain*> textureTerrain;
 	std::vector<TextureInterface*> textureInterface;
 	std::vector<TextureObject*> textureObject;
 
-	std::vector<ObjectGraph*> objectGraph;
-
 	int pos_view_x, pos_view_y;
 
-	void setScreenResolution(int w, int h)
-	{
-		wScreen = w;
-		hScreen = h;
-		close();
-		init();
-	}
+	Palette palette;
 
-	void drawTextureTer(int iTex, int x, int y, int i, int j)
-	{
-		auto& tex = textureTerrain[iTex];
-		int iFr = i % tex->num_dim;
-		int jFr = j % tex->num_dim;
-		int iFrame = iFr * tex->num_dim + (tex->num_dim - 1) - jFr; // begin - right corner
+	virtual bool init() = 0;
+	virtual void close() = 0;
+	virtual void drawAll(World* world, double dt) = 0;
 
-		if (tex->id_slp == -1)
-			return;
-		tex->load();
-		SDL_Rect renderQuad;
-		FrameSLP* frame = tex->slp->frame[iFrame];
+	//virtual ~Renderer() = 0;
 
-		SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom((void*)(tex->slp->frame[iFrame]->picture), tex->slp->frame[iFrame]->width, tex->slp->frame[iFrame]->height,
-			8, tex->slp->frame[iFrame]->width, SDL_PIXELFORMAT_INDEX8);
-		SDL_SetColorKey(surface, SDL_TRUE, 255);
+	virtual void drawText(std::string text, int x, int y, int color = 255) = 0;
 
-		for (int j = 0; j < 256; j++)
-		{
-			surface->format->palette->colors[j] = palette.color[j];
-		}
-
-		SDL_Texture* mTexture = SDL_CreateTextureFromSurface(gRenderer, surface);
-
-		SDL_SetTextureBlendMode(mTexture, SDL_BLENDMODE_BLEND);
-		renderQuad = { x - frame->hotspot_x, y - frame->hotspot_y, frame->width, frame->height };
-		SDL_RenderCopyEx(gRenderer, mTexture, NULL, &renderQuad, NULL, NULL, SDL_FLIP_NONE);
-		SDL_DestroyTexture(mTexture);
-		SDL_FreeSurface(surface);
-	}
-
-	void loadTextures()
+	void loadTextures() // todo: remove it when make resource manager
 	{
 		palette.setAge2();
 		textureInterface.push_back(new TextureInterface);
@@ -138,10 +120,83 @@ public:
 		textureObject.push_back(new TextureObject("archer_d", 5, 10, 8, 1.0));// archer die
 		textureObject.push_back(new TextureObject("archer_c", 9, 10, 8));// archer corpse
 
-		objectGraph.push_back(new ObjectGraph("archer", 7, 8, 9, 10, 11)); // archer
+	//	objectGraph.push_back(new ObjectGraph("archer", 7, 8, 9, 10, 11)); // archer
 	}
 
-	bool init()
+};
+
+//// TODO: i must try directX or opengl!!!!!!!
+class RendererSDL: public Renderer
+{
+public:
+
+	SDL_Window* gWindow = nullptr;
+	SDL_Surface* gScreenSurface = nullptr;
+	SDL_Renderer* gRenderer = nullptr;
+	TTF_Font* gFont = nullptr;
+
+	// so ugly and slow method
+	void drawTexture(Texture* tex, int x, int y, int iFrame = 0, bool flip = false)
+	{
+		if (tex->id_slp == -1)
+			return;
+		tex->load();// not beautiful
+
+		FrameSLP* frame = tex->slp->frame[iFrame];
+
+		SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom
+		(
+			(void*)(tex->slp->frame[iFrame]->picture),
+			tex->slp->frame[iFrame]->width,
+			tex->slp->frame[iFrame]->height,
+			8, 
+			tex->slp->frame[iFrame]->width, 
+			SDL_PIXELFORMAT_INDEX8
+		);
+		SDL_SetColorKey(surface, SDL_TRUE, 255);
+
+		for (int j = 0; j < 256; j++)
+		{
+			surface->format->palette->colors[j] = palette.color[j];
+		}
+
+		SDL_Texture* mTexture = SDL_CreateTextureFromSurface(gRenderer, surface);
+
+		SDL_SetTextureBlendMode(mTexture, SDL_BLENDMODE_BLEND);
+		SDL_Rect renderQuad{0, y - frame->hotspot_y, frame->width, frame->height};
+		if (flip)
+		{
+			renderQuad.x = x - frame->width - frame->hotspot_x;
+			SDL_RenderCopyEx(gRenderer, mTexture, NULL, &renderQuad, NULL, NULL, SDL_FLIP_HORIZONTAL);
+		}
+		else
+		{
+			renderQuad.x = x - frame->hotspot_x;
+			SDL_RenderCopyEx(gRenderer, mTexture, NULL, &renderQuad, NULL, NULL, SDL_FLIP_NONE);
+		}
+		SDL_DestroyTexture(mTexture);
+		SDL_FreeSurface(surface);
+		
+	}
+
+	void drawTextureTer(int iTex, int x, int y, int i, int j)
+	{
+		auto& tex = textureTerrain[iTex];
+		int iFr = i % tex->num_dim;
+		int jFr = j % tex->num_dim;
+		int iFrame = iFr * tex->num_dim + (tex->num_dim - 1) - jFr; // begin - right corner
+
+		drawTexture(tex,x,y,iFrame);
+	}
+
+	void drawTextureInt(int iTex, int x, int y, int iFrame = 0)
+	{
+		auto& tex = textureInterface[iTex];
+
+		drawTexture(tex, x, y, iFrame);
+	}
+
+	bool init() override
 	{
 		//Create window
 		gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, wScreen, hScreen, SDL_WINDOW_SHOWN);
@@ -188,14 +243,13 @@ public:
 			}
 		}
 
-		loadTextures();
+		loadTextures(); // it will remove from here
 
 		return true;
 	}
 
-	void close()
+	void close() override
 	{
-
 		TTF_CloseFont(gFont);
 		gFont = nullptr;
 
@@ -214,12 +268,12 @@ public:
 		SDL_Quit();
 	}
 
-	~Renderer()
+	~RendererSDL()
 	{
 		close();
 	}
 
-	void drawAll(World* world, double dt)
+	void drawAll(World* world, double dt) override
 	{
 		// main color is black
 		SDL_SetRenderDrawColor(gRenderer, 0x0, 0x0, 0x00, 0x0);
@@ -232,7 +286,7 @@ public:
 		topLeftViewport.w = wScreen;
 		topLeftViewport.h = hScreen;
 		SDL_RenderSetViewport(gRenderer, &topLeftViewport);
-		textureInterface[0]->draw(gRenderer, 0, 0);
+		drawTextureInt(0, 0, 0);
 
 		// draw main world
 		topLeftViewport.x = 0;
@@ -240,8 +294,8 @@ public:
 		topLeftViewport.w = wScreen;
 		topLeftViewport.h = 430;
 		SDL_RenderSetViewport(gRenderer, &topLeftViewport);
-		drawTerrain(world);
-		drawObjects(world);
+		//drawTerrain(world);
+		//drawObjects(world);
 
 		// draw fps
 		std::stringstream ss;
@@ -253,7 +307,7 @@ public:
 		SDL_RenderPresent(gRenderer);
 	}
 
-	void drawText(std::string text, int x, int y, int color=255)// todo: сделать цвет из палитры
+	void drawText(std::string text, int x, int y, int color=255)
 	{
 		SDL_Color textColor = palette.color[color];
 		SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, text.c_str(), textColor);
@@ -265,10 +319,6 @@ public:
 
 	void drawTerrain(World* world)
 	{
-		int size_tile_x_half = TILE_SIZEx / 2;
-		int size_tile_y_half = TILE_SIZEy / 2;
-		int size_tile_x = TILE_SIZEx;
-		int size_tile_y = TILE_SIZEy;
 		int size_world_x = world->w;
 		int size_world_y = world->h;
 		int wScreen_half = wScreen / 2;
@@ -276,15 +326,14 @@ public:
 		for (int i = 0; i < size_world_x; i++)
 			for (int j = 0; j < size_world_y; j++)
 			{
-				int posx = wScreen_half + (i - j) * size_tile_x_half - pos_view_x - size_tile_x_half;
-				int posy = (i + j) * size_tile_y_half - pos_view_y;
-				if ((posx < -size_tile_x) || (posx > wScreen) || (posy < -size_tile_y) || (posy > hScreen))
+				int posx = wScreen_half + (i - j) * HALF_TILE_SIZEX - pos_view_x - HALF_TILE_SIZEX;
+				int posy = (i + j) * HALF_TILE_SIZEY - pos_view_y;
+				if ((posx < - TILE_SIZEX) || (posx > wScreen) || (posy < -TILE_SIZEY) || (posy > hScreen))
 				{
 					pos++;
 					continue;
 				}
 				int rr = world->tile[pos].type;
-			//	textureTerrain[rr]->draw(gRenderer, &palette, posx, posy, i, j);
 				drawTextureTer(rr, posx, posy, i, j);
 				pos++;
 			}
@@ -317,6 +366,7 @@ public:
 
 	void drawObjects(World* world)// todo: сделать чтобы рисовался цвет игрока
 	{
+		/*
 		int size_tile_x_half = TILE_SIZEx / 2;
 		int size_tile_y_half = TILE_SIZEy / 2;
 		int wScreen_half = wScreen / 2;
@@ -333,14 +383,9 @@ public:
 			{
 				continue;
 			}
-			tex->draw(gRenderer, posx, posy, obj->dir, obj->now);
+			//tex->draw(gRenderer, posx, posy, obj->dir, obj->now);
 		}
+		*/
 	}
-
-
-
-
-
-
 
 };
