@@ -6,9 +6,8 @@
 #include <vector>
 #include <list>
 #include <sstream>
-#include "world.h"
 #include <Windows.h>
-
+#include "world.h"
 #include "renderer.h"
 
 // TODO:
@@ -25,18 +24,18 @@ public:
 
 };
 
-
+// class of game engine
 class Engine
 {
 public:
 
 	bool isRun;
-	World* world;
-	int nCores;
-	double max_fps = 25.0;
+	World* world; // world where all proceed
+	int nCores;  // cores pf processor (not used)
+	double max_fps = 25.0; // limit of fps (not used because my fps very smaaaall)
 
-	Renderer* renderer;
-	ResourceManager* resourceManager;
+	Renderer* renderer; // renderer
+	ResourceManager* resourceManager; 
 
 	Engine():
 		isRun{ false },
@@ -67,6 +66,7 @@ public:
 		run();
 	}
 
+	// main cycle
 	void run()
 	{
 //		auto tp1 = std::chrono::steady_clock::now();
@@ -196,10 +196,9 @@ public:
 
 			double t1 = omp_get_wtime();
 			
-
-			world->updateAll(dt);
+			world->updateAll();
 			double t2 = omp_get_wtime();
-			renderer->drawAll(world,dt);
+			renderer->drawAll(world);
 			double t3 = omp_get_wtime();
 
 			std::stringstream ss;
@@ -237,6 +236,7 @@ public:
 			//	SDL_Delay((1.0 / max_fps - dt)*1000.0);
 			//	dt = 1.0 / max_fps;
 			}
+			world->setDT(dt);
 		}
 	}
 };

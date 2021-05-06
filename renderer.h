@@ -7,7 +7,8 @@
 #include "resourceManager.h"
 #include <sstream>
 
-struct RendererState
+// struct for storing renderer option (in future)
+struct RendererOptions
 {
 	bool drawInterface;
 	bool drawTerrain;
@@ -20,40 +21,40 @@ struct RendererState
 	bool drawMesh;
 };
 
+// abstract class of renderer for render picture
 class Renderer
 {
-
 public:
 
 	virtual bool init(ResourceManager* rm) = 0;
 	virtual void close() = 0;
-	virtual void drawAll(World* world, double dt) = 0;
+	virtual void drawAll(World* world) = 0;
 	virtual ~Renderer() {}
-	int pos_view_x, pos_view_y;
+	float pos_view_x, pos_view_y; // screen position
 
 protected:
 
+	RendererOptions options;
 	ResourceManager* rm;
-
+	// may be all this params should move to resource manager
 	const int TILE_SIZEX = 96;
 	const int TILE_SIZEY = 48;
 	const int HALF_TILE_SIZEX = TILE_SIZEX / 2;
 	const int HALF_TILE_SIZEY = TILE_SIZEY / 2;
-	RendererState options;
-
 	int wScreen = 800;
 	int hScreen = 600;
 	int dColor = 32;
 };
 
 //// TODO: i must try directX or opengl!!!!!!!
+// realization of sdl renderer (VERY SLOW in this realization)
 class RendererSDL: public Renderer
 {
 public:
 
 	bool init(ResourceManager* rm_) override;
 	void close() override;
-	void drawAll(World* world, double dt) override;
+	void drawAll(World* world) override;
 	~RendererSDL();
 
 protected:
@@ -63,19 +64,18 @@ protected:
 	SDL_Renderer* gRenderer = nullptr;
 	TTF_Font* gFont = nullptr;
 
-	void drawInterface();
-	void drawTerrains(World* world);
-	void drawObjects(World* world);
 
-	void drawGUI();
-	void drawDebugInfo();
+	void drawInterface(); // draw main screen
+	void drawTerrains(World* world); // draw terrains of world
+	void drawObjects(World* world); // draw objects
+	void drawGUI(); // draw gui (not work now)
+	void drawDebugInfo(); // in future there will be debug info 
 
-	void drawTexture(Texture* tex, int x, int y, int iFrame = 0, bool flip = false);
-	void drawTextureTerrain(int iTex, int x, int y, int i, int j);
-	void drawTextureInterface(int iTex, int x, int y, int iFrame = 0);
-	void drawTextureObject(int iTex, int x, int y, int iFrame = 0);
-
-	void drawText(std::string text, int x, int y, int color = 255);
+	void drawTexture(Texture* tex, int x, int y, int iFrame = 0, bool flip = false); // common method for all tex
+	void drawTextureTerrain(int iTex, int x, int y, int i, int j); // draw one terrain tile
+	void drawTextureInterface(int iTex, int x, int y, int iFrame = 0); // draw one picture (icon or interface)
+	void drawTextureObject(int iTex, int x, int y, int iFrame = 0); // draw one object
+	void drawText(std::string text, int x, int y, int color = 255); // draw text
 
 };
 

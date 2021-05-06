@@ -140,7 +140,7 @@ void RendererSDL::drawTexture(Texture* tex, int x, int y, int iFrame, bool flip)
 
 	for (int j = 0; j < 256; j++)
 	{
-		surface->format->palette->colors[j] = rm->palette.color[j];
+		surface->format->palette->colors[j] = rm->palette.color[j].toSTL2();
 	}
 
 	SDL_Texture* mTexture = SDL_CreateTextureFromSurface(gRenderer, surface);
@@ -240,7 +240,7 @@ RendererSDL::~RendererSDL()
 	close();
 }
 
-void RendererSDL::drawAll(World* world, double dt)
+void RendererSDL::drawAll(World* world)
 {
 	// main color is black
 	SDL_SetRenderDrawColor(gRenderer, 0x0, 0x0, 0x00, 0x0);
@@ -263,7 +263,7 @@ void RendererSDL::drawAll(World* world, double dt)
 	// draw fps
 	std::stringstream ss;
 	ss.precision(3);
-	ss << "FPS: " << 1.0 / dt;
+	ss << "FPS: " << 1.0 / world->dt;
 	drawText(ss.str(), 1, 1);
 
 	// draw all
@@ -272,7 +272,7 @@ void RendererSDL::drawAll(World* world, double dt)
 
 void RendererSDL::drawText(std::string text, int x, int y, int color)
 {
-	SDL_Color textColor = rm->palette.color[color];
+	SDL_Color textColor = rm->palette.color[color].toSTL2();
 	SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, text.c_str(), textColor);
 	SDL_Texture* mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
 	SDL_Rect renderQuad = { x, y, textSurface->w, textSurface->h };

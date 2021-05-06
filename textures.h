@@ -3,13 +3,14 @@
 #include <vector>
 #include <fstream>
 
+// class for storing one picture of slp animation
 class FrameSLP
 {
 public:
 	int width;
 	int height;
-	int32_t hotspot_x;
-	int32_t hotspot_y;
+	int32_t hotspot_x; // center x
+	int32_t hotspot_y; // center y
 	uint8_t* picture = nullptr;
 
 	~FrameSLP();
@@ -18,6 +19,7 @@ public:
 	FrameSLP(char* buff, int pos);
 };
 
+// class for storing slp animation (array of frames)
 class FileSLP
 { 
 public:
@@ -28,6 +30,7 @@ public:
 	void load(char* buff);
 };
 
+// classes for woork with sound and scripts (not use now)
 class FileBINA
 {
 public:
@@ -42,6 +45,7 @@ public:
 	uint32_t size;
 };
 
+// common class for work with slp
 class Texture
 {
 public:
@@ -61,6 +65,7 @@ public:
 
 };
  
+// class of terrain textures as grass ice water sand
 class TextureTerrain: public Texture
 {
 public:
@@ -127,6 +132,7 @@ public:
 	*/
 };
 
+// class of object textures as units trees, houses
 class TextureObject : public Texture
 {
 public:
@@ -180,6 +186,7 @@ public:
 	*/
 };
 
+// class of interfaces textures as interface, icons
 class TextureInterface: public Texture
 {
 public:

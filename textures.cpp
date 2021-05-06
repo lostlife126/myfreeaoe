@@ -37,7 +37,7 @@ FrameSLP::FrameSLP(char* buff, int pos)
 	picture = new uint8_t[width * height];
 	std::fill_n(picture, width * height, 255); // transparent color
 	pos = headerSLP.outline_table_offset;
-	uint32_t* edges = new uint32_t[height];
+	uint32_t* edges = new uint32_t[height]; // transparent edges of frame
 	memcpy(edges, &(buff[pos]), 4 * height);
 	pos += 4 * height;
 	uint32_t* cmdTable = new uint32_t[height];

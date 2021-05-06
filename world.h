@@ -2,6 +2,7 @@
 #include <vector>
 #include "textures.h"
 
+// all used types of terrain
 enum TypeTiles
 {
 	MARSHLAND = 0,
@@ -40,6 +41,8 @@ enum TypeTiles
 
 };
 
+
+// array of climate for dependence of temperature and participates (not used now)
 static int climat[8][8] =
 {
 	TypeTiles::SNOW,
@@ -116,6 +119,7 @@ static int climat[8][8] =
 
 };
 
+// class of tile (neeeeeed refaaact!!!!)
 class Tile
 {
 public:
@@ -161,12 +165,13 @@ public:
 	{}
 };
 
+// class of object - neeeeed refaaaact!!!!
 class Object
 {
 public:
 	int frameObject;
-	double posX = 0; // position on map
-	double posY = 0; // position on map
+	float posX = 0; // position on map
+	float posY = 0; // position on map
 
 	double now = 0.0; // frame duration now
 	int dir = 0; // 0 - вниз, 1 - влево вниз, 2 - влево, 3 - вверх влево, -1 - вправо вниз и тд
@@ -351,6 +356,7 @@ public:
 };
 */
 
+// class world stores all tiles and objects (now). one day it will be a heart of all.
 class World
 {
 public:
@@ -359,7 +365,8 @@ public:
 	int h;
 	int num_tiles;
 	int num_objects;
-	double time_now = 0.0;
+	float time_now = 0.0;
+	float dt;
 	int iter = 0;
 
 	std::vector<Tile> tile;
@@ -373,7 +380,13 @@ public:
 		tile.resize(num_tiles);
 	}
 
-	void updateAll(double dt)
+	void setDT(float dt_)
+	{
+		dt = dt_;
+	}
+
+	// update world in time
+	void updateAll()
 	{
 		for (uint32_t i = 0; i < object.size(); i++)
 		{
@@ -470,6 +483,8 @@ public:
 			}
 	}
 	*/
+
+	// set void world (with grass)
 	void setVoid()
 	{
 		int iter = 0;
@@ -483,6 +498,7 @@ public:
 		    }
 	}
 
+	// add object to world
 	void addObject(int t_, double x_, double y_)
 	{
 		x_ = (x_) + 0.5;

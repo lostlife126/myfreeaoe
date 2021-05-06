@@ -1,23 +1,44 @@
 #pragma once
 #include <vector>
 
+// simple struct for storing rgba and convert to sdl_color
+struct myColor 
+{
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+	uint8_t a;
+
+	myColor() :r(0), g(0), b(0), a(0) {}
+	myColor(uint8_t  r_, uint8_t  g_, uint8_t  b_, uint8_t  a_ = 255): r(r_), g(g_), b(b_), a(a_) {}
+	SDL_Color toSTL2()
+	{
+		SDL_Color sc;
+		sc.r = r;
+		sc.g = g;
+		sc.b = b;
+		sc.a = a;
+		return sc;
+	}
+};
+
+// palette of 256 colors using by slp
 class Palette
 {
 public:
 
-	std::vector<SDL_Color> color;
+	std::vector<myColor> color;
 
 	Palette()
 	{}
 
-	void setAge2()
+	void setAge2() // load from file (bad method... need to refact)
 	{
 		std::fstream file("pal7.txt", std::ios::in);// 7 for terrain
-		color.resize(256);
-
+		color.reserve(256);
+		myColor c(0,0,0);
 		for (int i = 0; i < 256; i++)
 		{
-			SDL_Color c;
 			int temp;
 			file >> temp;
 			c.r = temp;
@@ -25,14 +46,14 @@ public:
 			c.g = temp;
 			file >> temp;
 			c.b = temp;
-			c.a = 255;
-			color[i] = c;
+			color.push_back(c);
 		}
 		file.close();
 	}
 
 };
 
+// resource manager stored all textures (and sounds in further and...)
 class ResourceManager
 {
 public:
@@ -42,6 +63,7 @@ public:
 	std::vector<TextureInterface*> textureInterface;
 	std::vector<TextureObject*> textureObject;
 
+	// method for init textures (in future will be loaded from file. now this piece of shit....)
 	void loadTextures() // todo: remove it when make resource manager
 	{
 		textureInterface.push_back(new TextureInterface);
