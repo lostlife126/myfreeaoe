@@ -36,13 +36,17 @@ public:
 	double max_fps = 25.0;
 
 	Renderer* renderer;
+	ResourceManager* resourceManager;
 
 	Engine():
 		isRun{ false },
 		nCores{ SDL_GetCPUCount() } // число процов
 	{
+		resourceManager = new ResourceManager;
+		resourceManager->loadTextures();
 		renderer = new RendererSDL;
-		renderer->init();
+		renderer->init(resourceManager);
+
 
 		world = new World(32, 32);
 		world->setVoid();
@@ -151,7 +155,7 @@ public:
 
 				if (e.type == SDL_MOUSEBUTTONUP)
 				{
-					int x, y;
+			/*		int x, y;
 					SDL_GetMouseState(&x, &y);
 					x = x - renderer->wScreen / 2 + renderer->pos_view_x; - renderer->TILE_SIZEX / 2;
 					y = y + renderer->pos_view_y - renderer->TILE_SIZEY / 2;
@@ -167,7 +171,7 @@ public:
 						world->tile[pos].type = 1;
 					}
 					
-					
+					*/
 					break;
 				}
 
@@ -179,16 +183,16 @@ public:
 				break;
 
 			}
-			int x, y;
-			SDL_GetMouseState(&x, &y);
-			if(x < 10)
-				renderer->pos_view_x -= 500.0 * dt;
-			if (x > renderer->wScreen-10)
-				renderer->pos_view_x += 500.0 * dt;
-			if (y < 10)
-				renderer->pos_view_y -= 500.0 * dt;
-			if (y > renderer->hScreen - 10)
-				renderer->pos_view_y += 500.0 * dt;
+	//		int x, y;
+	//		SDL_GetMouseState(&x, &y);
+	//		if(x < 10)
+	//			renderer->pos_view_x -= 500.0 * dt;
+	//		if (x > renderer->wScreen-10)
+	//			renderer->pos_view_x += 500.0 * dt;
+	//		if (y < 10)
+	//			renderer->pos_view_y -= 500.0 * dt;
+	//		if (y > renderer->hScreen - 10)
+	//			renderer->pos_view_y += 500.0 * dt;
 
 			double t1 = omp_get_wtime();
 			
@@ -202,24 +206,24 @@ public:
 		//	ss.precision(3);
 			
 			ss << "time: " << world->time_now;
-			renderer->drawText(ss.str(), 1, 20);
+//			renderer->drawText(ss.str(), 1, 20);
 			ss.precision(3);
 			ss.str("");
 			ss << "time input: " << dt_input/dt*100.0;
-			renderer->drawText(ss.str(), 1, 40);
+	//		renderer->drawText(ss.str(), 1, 40);
 			ss.str("");
 			ss << "time update: " << dt_update / dt * 100.0;
-			renderer->drawText(ss.str(), 1, 60);
+	//		renderer->drawText(ss.str(), 1, 60);
 			ss.str("");
 			ss << "time draw: " << dt_draw / dt * 100.0;
-			renderer->drawText(ss.str(), 1, 80);
+	//		renderer->drawText(ss.str(), 1, 80);
 			ss.str("");
 			ss << "time render: " << dt_render / dt * 100.0;
-			renderer->drawText(ss.str(), 1, 100);
+	//		renderer->drawText(ss.str(), 1, 100);
 			
 			ss.str("");
 			ss << "(" << renderer->pos_view_x<<", "<< renderer->pos_view_y<<")";
-			renderer->drawText(ss.str(), 690, 1);
+	//		renderer->drawText(ss.str(), 690, 1);
 
 		//	SDL_RenderPresent(renderer->gRenderer);
 			double t4 = omp_get_wtime();
