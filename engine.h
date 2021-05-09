@@ -43,7 +43,8 @@ public:
 	{
 		resourceManager = new ResourceManager;
 		resourceManager->loadTextures();
-		renderer = new RendererDX7;
+		//renderer = new RendererDX7;
+		renderer = new RendererSDL;
 		renderer->init(resourceManager);
 
 

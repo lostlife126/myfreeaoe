@@ -132,16 +132,11 @@ void RendererSDL::drawTexture(Texture* tex, int x, int y, int iFrame, bool flip)
 		(void*)(tex->slp->frame[iFrame]->picture),
 		tex->slp->frame[iFrame]->width,
 		tex->slp->frame[iFrame]->height,
-		8,
-		tex->slp->frame[iFrame]->width,
-		SDL_PIXELFORMAT_INDEX8
+		32,
+		tex->slp->frame[iFrame]->width*4,
+		SDL_PIXELFORMAT_BGRA32
 	);
-	SDL_SetColorKey(surface, SDL_TRUE, 255);
-
-	for (int j = 0; j < 256; j++)
-	{
-		surface->format->palette->colors[j] = rm->palette.color[j].toSTL2();
-	}
+	SDL_SetColorKey(surface, SDL_TRUE, tex->palette->color[255].c);
 
 	SDL_Texture* mTexture = SDL_CreateTextureFromSurface(gRenderer, surface);
 
@@ -272,7 +267,8 @@ void RendererSDL::drawAll(World* world)
 
 void RendererSDL::drawText(std::string text, int x, int y, int color)
 {
-	SDL_Color textColor = rm->palette.color[color].toSTL2();
+	SDL_Color textColor; MyColor c = rm->palette.color[color].c;
+	textColor.r = c.r; textColor.g = c.g; textColor.b = c.b; textColor.a = c.a;
 	SDL_Surface* textSurface = TTF_RenderText_Solid(gFont, text.c_str(), textColor);
 	SDL_Texture* mTexture = SDL_CreateTextureFromSurface(gRenderer, textSurface);
 	SDL_Rect renderQuad = { x, y, textSurface->w, textSurface->h };
@@ -368,9 +364,9 @@ bool RendererDX7::init(ResourceManager* rm_)
 
 void RendererDX7::close() 
 {
-	if (backSurf != nullptr) backSurf->Release(); backSurf = nullptr;
-	if (primSurf != nullptr) primSurf->Release(); primSurf = nullptr;
-	if (ppiDD != nullptr) ppiDD->Release(); ppiDD = nullptr;
+	if (backSurf != nullptr) { backSurf->Release(); backSurf = nullptr; }
+	if (primSurf != nullptr) { primSurf->Release(); primSurf = nullptr; }
+	if (ppiDD != nullptr) { ppiDD->Release(); ppiDD = nullptr; }
 }
 
 RendererDX7::~RendererDX7() 
@@ -463,7 +459,7 @@ void RendererDX7::drawTexture2(Texture* tex, int x, int y, int iFrame, bool flip
 		{
 			for (int i = 0; i < frame->width; i++)
 			{
-				pix[pos] = rm->palette.color[frame->picture[pos]].toInt();
+				pix[pos] = frame->picture[pos].c;
 				pos++;
 			}
 		}

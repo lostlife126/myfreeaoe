@@ -8,14 +8,11 @@ FrameSLP::~FrameSLP()
 
 void FrameSLP::free()
 {
-	if (picture != nullptr)
-	{
-		delete[] picture;
-		picture = nullptr;
-	}
+	if (picture != nullptr) { delete[] picture; picture = nullptr;}
+	if (pic_low != nullptr) { delete[] pic_low; pic_low = nullptr; }
 }
 
-FrameSLP::FrameSLP(char* buff, int pos)
+FrameSLP::FrameSLP(char* buff, int pos, Palette* p)
 {
 	struct
 	{
@@ -32,10 +29,12 @@ FrameSLP::FrameSLP(char* buff, int pos)
 	memcpy(&headerSLP, &(buff[pos]), 32);
 	width = headerSLP.width;
 	height = headerSLP.height;
+	uint32_t sizePic = width * height;
 	hotspot_x = headerSLP.hotspot_x;
 	hotspot_y = headerSLP.hotspot_y;
-	picture = new uint8_t[width * height];
-	std::fill_n(picture, width * height, 255); // transparent color
+	picture = new MyColor[sizePic];
+	pic_low = new uint8_t[sizePic];
+	std::fill_n(pic_low, sizePic, 255); // transparent color
 	pos = headerSLP.outline_table_offset;
 	uint32_t* edges = new uint32_t[height]; // transparent edges of frame
 	memcpy(edges, &(buff[pos]), 4 * height);
@@ -79,7 +78,7 @@ FrameSLP::FrameSLP(char* buff, int pos)
 				case 8:
 				case 0xC:
 					pix_cnt = data >> 2;
-					memcpy(&(picture[i * width + pix_pos]), &(buff[pos]), pix_cnt);
+					memcpy(&(pic_low[i * width + pix_pos]), &(buff[pos]), pix_cnt);
 					pos += pix_cnt;
 					pix_pos += pix_cnt;
 					break;
@@ -96,7 +95,7 @@ FrameSLP::FrameSLP(char* buff, int pos)
 					memcpy(&addOff, &(buff[pos]), 1);
 					pos++;
 					pix_cnt = ((data & 0xf0) << 4) + addOff;
-					memcpy(&(picture[i * width + pix_pos]), &(buff[pos]), pix_cnt);
+					memcpy(&(pic_low[i * width + pix_pos]), &(buff[pos]), pix_cnt);
 					pos += pix_cnt;
 					pix_pos += pix_cnt;
 					break;
@@ -125,7 +124,7 @@ FrameSLP::FrameSLP(char* buff, int pos)
 						memcpy(&ff, &(buff[pos]), 1);
 						pos++;
 						ff += 16 * 2;
-						picture[i * width + pix_pos] = ff;
+						pic_low[i * width + pix_pos] = ff;
 						pix_pos++;
 					}
 					break;
@@ -145,7 +144,7 @@ FrameSLP::FrameSLP(char* buff, int pos)
 					pos++;
 					for (uint32_t j = 0; j < pix_cnt; j++)
 					{
-						picture[i * width + pix_pos] = color_index;
+						pic_low[i * width + pix_pos] = color_index;
 						pix_pos++;
 					}
 					break;
@@ -165,7 +164,7 @@ FrameSLP::FrameSLP(char* buff, int pos)
 					pos++;
 					for (uint32_t j = 0; j < pix_cnt; j++)
 					{
-						picture[i * width + pix_pos] = color_index;
+						pic_low[i * width + pix_pos] = color_index;
 						pix_pos++;
 					}
 					break;
@@ -201,12 +200,12 @@ FrameSLP::FrameSLP(char* buff, int pos)
 
 					case 0x4E: //Outline pixel TODO player color
 						color_index = 16 * 2;
-						picture[i * width + pix_pos] = color_index;
+						pic_low[i * width + pix_pos] = color_index;
 						pix_pos += 1;
 						break;
 					case 0x6E:
 						color_index = 16 * 3;
-						picture[i * width + pix_pos] = color_index;
+						pic_low[i * width + pix_pos] = color_index;
 						pix_pos += 1;
 						break;
 
@@ -217,7 +216,7 @@ FrameSLP::FrameSLP(char* buff, int pos)
 						color_index = 16 * 2;
 						for (uint32_t j = 0; j < pix_cnt; j++)
 						{
-							picture[i * width + pix_pos] = color_index;
+							pic_low[i * width + pix_pos] = color_index;
 							pix_pos++;
 						}
 						break;
@@ -228,7 +227,7 @@ FrameSLP::FrameSLP(char* buff, int pos)
 						color_index = 16 * 3;
 						for (uint32_t j = 0; j < pix_cnt; j++)
 						{
-							picture[i * width + pix_pos] = color_index;
+							pic_low[i * width + pix_pos] = color_index;
 							pix_pos++;
 						}
 						break;
@@ -253,12 +252,15 @@ FrameSLP::FrameSLP(char* buff, int pos)
 	}
 	delete[] edges;
 	delete[] cmdTable;
+	for (int i = 0; i < sizePic; i++)
+	{
+		picture[i] = p->color[pic_low[i]].c;
+	}
 }
 
-
-
-void FileSLP::load(char* buff)
+void FileSLP::load(char* buff, Palette* p)
 {
+	palette = p;
 	struct
 	{
 		char version[4];
@@ -269,7 +271,7 @@ void FileSLP::load(char* buff)
 	frame.resize(header.nFrames);
 	for (uint32_t i = 0; i < frame.size(); i++)
 	{
-		frame[i] = new FrameSLP(buff, (i + 1) * 32);
+		frame[i] = new FrameSLP(buff, (i + 1) * 32, p);
 	}
 }
 
@@ -332,7 +334,8 @@ void Texture::load()
 					char* buff = new char[headerFile.size];
 					file.seekg(headerFile.offset, std::ios::beg);
 					file.read(buff, headerFile.size);
-					slp->load(buff);
+					slp->load(buff, palette);
+
 					delete[] buff;
 					file.close();
 					return;

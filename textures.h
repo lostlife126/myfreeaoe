@@ -3,6 +3,57 @@
 #include <vector>
 #include <fstream>
 
+// class for storing color in format rgba
+struct MyColor
+{
+	union
+	{
+		uint32_t c;
+		struct
+		{
+			uint8_t b;
+			uint8_t g;
+			uint8_t r;
+			uint8_t a;
+		};
+	};
+
+	MyColor() :c(0) {}
+	MyColor(uint8_t  r_, uint8_t  g_, uint8_t  b_, uint8_t  a_ = 255) : r(r_), g(g_), b(b_), a(a_) {}
+	MyColor(uint32_t c_) : c(c_) {}
+};
+
+class Palette
+{
+public:
+
+	std::vector<MyColor> color;
+
+	Palette()
+	{}
+
+	void setAge2() // load from file (bad method... need to refact)
+	{
+		std::fstream file("pal7.txt", std::ios::in);// 7 for terrain
+		color.reserve(256);
+		MyColor c;
+		for (int i = 0; i < 256; i++)
+		{
+			int temp;
+			file >> temp;
+			c.r = temp;
+			file >> temp;
+			c.g = temp;
+			file >> temp;
+			c.b = temp;
+			c.a = 255;
+			color.push_back(c);
+		}
+		file.close();
+	}
+
+};
+
 // class for storing one picture of slp animation
 class FrameSLP
 {
@@ -11,23 +62,26 @@ public:
 	int height;
 	int32_t hotspot_x; // center x
 	int32_t hotspot_y; // center y
-	uint8_t* picture = nullptr;
+	uint8_t* pic_low = nullptr;
+	MyColor* picture = nullptr;
 
 	~FrameSLP();
 	void free();
 
-	FrameSLP(char* buff, int pos);
+	FrameSLP(char* buff, int pos, Palette* p_);
 };
 
 // class for storing slp animation (array of frames)
 class FileSLP
 { 
 public:
+	Palette* palette = nullptr;
 	std::vector<FrameSLP*> frame;
+
 
 	FileSLP() {}
 
-	void load(char* buff);
+	void load(char* buff, Palette* p);
 };
 
 // classes for woork with sound and scripts (not use now)
@@ -51,14 +105,16 @@ class Texture
 public:
 	int id_slp = -1;
 	FileSLP* slp = nullptr;
+	Palette* palette = nullptr;
 	std::string caption;
 
 	Texture()
 	{}
 
-	Texture(const char* c, int id):
+	Texture(const char* c, int id, Palette* p_):
 		caption(c),
-		id_slp(id)
+		id_slp(id),
+		palette(p_)
 	{}
 
 	void load();
@@ -73,8 +129,8 @@ public:
 	int num_dim = 1;
 	uint8_t minimap_color = 0;
 
-	TextureTerrain(const char* c, int id, int dims, uint8_t color=0):
-		Texture(c,id),
+	TextureTerrain(const char* c, int id, int dims, Palette* p, uint8_t color=0):
+		Texture(c,id, p),
 		num_dim(dims),
 		minimap_color(color)
 	{}
@@ -141,8 +197,8 @@ public:
 	int directions = 1;
 	float anim_duration;
 
-	TextureObject(const char* c, int id, int fpa=1, int dirs=0, float dur=0.0):
-		Texture(c,id),
+	TextureObject(const char* c, int id, Palette* p, int fpa=1, int dirs=0, float dur=0.0):
+		Texture(c, id, p),
 		frames_per_angles(fpa),
 		directions(dirs),
 		anim_duration(dur)
