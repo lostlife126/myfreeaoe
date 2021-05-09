@@ -128,10 +128,10 @@ public:
 	int j; // right
 	int type;
 	int id_slp;
-	double hei;
-	double temper;
-	double precip;
-	double humid;
+	float hei;
+	float temper;
+	float precip;
+	float humid;
 
 	/*
 	void calcType()
@@ -169,11 +169,11 @@ public:
 class Object
 {
 public:
-	int frameObject;
-	float posX = 0; // position on map
-	float posY = 0; // position on map
+	int frameObject = 0;
+	float posX = 0.0f; // position on map
+	float posY = 0.0f; // position on map
 
-	double now = 0.0; // frame duration now
+	float now = 0.0f; // frame duration now
 	int dir = 0; // 0 - вниз, 1 - влево вниз, 2 - влево, 3 - вверх влево, -1 - вправо вниз и тд
 	int action = 0; // 0 - stand, 1 - walk, 2 - attack, 3 - die, 4 - decay
 
@@ -195,56 +195,56 @@ public:
 			dir = 4;
 	}
 
-	void walk(double dt)
+	void walk(float dt)
 	{
 		action = 1;
-		double dx, dy;
+		float dx=0.0f, dy=0.0f;
 		if (dir == 0)
 		{
-			dx = 0.7;
-			dy = 0.7;
+			dx = 0.7f;
+			dy = 0.7f;
 		}
 		else if (dir == 1)
 		{
-			dx = 0.0;
-			dy = 1.0;
+			dx = 0.0f;
+			dy = 1.0f;
 		}
 		else if (dir == 2)
 		{
-			dx = -0.7;
-			dy = 0.7;
+			dx = -0.7f;
+			dy = 0.7f;
 		}
 		else if (dir == 3)
 		{
-			dx = -1.0;
-			dy = 0.0;
+			dx = -1.0f;
+			dy = 0.0f;
 		}
 		else if(dir == 4)
 		{
-			dx = -0.7;
-			dy = -0.7;
+			dx = -0.7f;
+			dy = -0.7f;
 		}
 		else if (dir == -1)
 		{
-			dx = 1.0;
-			dy = 0.0;
+			dx = 1.0f;
+			dy = 0.0f;
 		}
 		else if (dir == -2)
 		{
-			dx = 0.7;
-			dy = -0.7;
+			dx = 0.7f;
+			dy = -0.7f;
 		}
 		else if (dir == -3)
 		{
-			dx = 0.0;
-			dy = -1.0;
+			dx = 0.0f;
+			dy = -1.0f;
 		}
 
 		posX += dx * dt;
 		posY += dy * dt;
 	}
 
-	void update(double dt)
+	void update(float dt)
 	{
 		now += dt;
 	}
@@ -499,10 +499,10 @@ public:
 	}
 
 	// add object to world
-	void addObject(int t_, double x_, double y_)
+	void addObject(int t_, float x_, float y_)
 	{
-		x_ = (x_) + 0.5;
-		y_ = (y_) + 0.5;
+		x_ = (x_) + 0.5f;
+		y_ = (y_) + 0.5f;
 		object.push_back(new Object);
 		object.back()->frameObject = t_;
 		object.back()->posX = x_;

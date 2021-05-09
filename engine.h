@@ -32,7 +32,7 @@ public:
 	bool isRun;
 	World* world; // world where all proceed
 	int nCores;  // cores pf processor (not used)
-	double max_fps = 25.0; // limit of fps (not used because my fps very smaaaall)
+	float max_fps = 25.0; // limit of fps (not used because my fps very smaaaall)
 
 	Renderer* renderer; // renderer
 	ResourceManager* resourceManager; 
@@ -43,7 +43,7 @@ public:
 	{
 		resourceManager = new ResourceManager;
 		resourceManager->loadTextures();
-		renderer = new RendererSDL;
+		renderer = new RendererDX7;
 		renderer->init(resourceManager);
 
 

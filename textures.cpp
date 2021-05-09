@@ -74,7 +74,7 @@ FrameSLP::FrameSLP(char* buff, int pos)
 
 			switch (cmd)
 			{
-				case 0:// leser draw
+				case 0: // leser draw
 				case 4:
 				case 8:
 				case 0xC:

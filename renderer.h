@@ -6,6 +6,7 @@
 #include "glut.h"
 #include "resourceManager.h"
 #include <sstream>
+#include <ddraw.h>
 
 // struct for storing renderer option (in future)
 struct RendererOptions
@@ -79,4 +80,25 @@ protected:
 
 };
 
+
+class RendererDX7 : public Renderer
+{
+public:
+
+	bool init(ResourceManager* rm_) override;
+	void close() override;
+	void drawAll(World* world) override;
+	~RendererDX7();
+
+	void drawTexture(Texture* tex, int x, int y, int iFrame = 0, bool flip = false); // common method for all tex
+	void drawTexture2(Texture* tex, int x, int y, int iFrame = 0, bool flip = false); // common method for all tex
+	void drawTextureInterface(int iTex, int x, int y, int iFrame = 0); // draw one picture (icon or interface)
+	void drawInterface(); // draw main screen
+
+protected:
+	IDirectDraw7* ppiDD = nullptr;
+	IDirectDrawSurface7* primSurf = nullptr;
+	IDirectDrawSurface7* backSurf = nullptr;
+	HWND hwnd;
+};
 

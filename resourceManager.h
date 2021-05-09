@@ -20,6 +20,13 @@ struct myColor
 		sc.a = a;
 		return sc;
 	}
+
+	int toInt()
+	{
+		int temp;
+		temp = b + g * 256 + r * 256 * 256 +a * 256 * 256 * 256;
+		return temp;
+	}
 };
 
 // palette of 256 colors using by slp
