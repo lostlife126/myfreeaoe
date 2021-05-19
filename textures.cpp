@@ -32,7 +32,7 @@ FrameSLP::FrameSLP(char* buff, int pos, Palette* p)
 	uint32_t sizePic = width * height;
 	hotspot_x = headerSLP.hotspot_x;
 	hotspot_y = headerSLP.hotspot_y;
-	picture = new MyColor[sizePic];
+	picture = new Color[sizePic];
 	pic_low = new uint8_t[sizePic];
 	std::fill_n(pic_low, sizePic, 255); // transparent color
 	pos = headerSLP.outline_table_offset;

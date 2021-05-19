@@ -4,7 +4,7 @@
 #include <fstream>
 
 // class for storing color in format rgba
-struct MyColor
+struct Color
 {
 	union
 	{
@@ -18,16 +18,16 @@ struct MyColor
 		};
 	};
 
-	MyColor() :c(0) {}
-	MyColor(uint8_t  r_, uint8_t  g_, uint8_t  b_, uint8_t  a_ = 255) : r(r_), g(g_), b(b_), a(a_) {}
-	MyColor(uint32_t c_) : c(c_) {}
+	Color() :c(0) {}
+	Color(uint8_t  r_, uint8_t  g_, uint8_t  b_, uint8_t  a_ = 255) : r(r_), g(g_), b(b_), a(a_) {}
+	Color(uint32_t c_) : c(c_) {}
 };
 
 class Palette
 {
 public:
 
-	std::vector<MyColor> color;
+	std::vector<Color> color;
 
 	Palette()
 	{}
@@ -36,7 +36,7 @@ public:
 	{
 		std::fstream file("pal7.txt", std::ios::in);// 7 for terrain
 		color.reserve(256);
-		MyColor c;
+		Color c;
 		for (int i = 0; i < 256; i++)
 		{
 			int temp;
@@ -58,12 +58,12 @@ public:
 class FrameSLP
 {
 public:
-	int width;
-	int height;
+	int32_t width;
+	int32_t height;
 	int32_t hotspot_x; // center x
 	int32_t hotspot_y; // center y
 	uint8_t* pic_low = nullptr;
-	MyColor* picture = nullptr;
+	Color* picture = nullptr;
 
 	~FrameSLP();
 	void free();
@@ -103,7 +103,7 @@ public:
 class Texture
 {
 public:
-	int id_slp = -1;
+	int32_t id_slp = -1;
 	FileSLP* slp = nullptr;
 	Palette* palette = nullptr;
 	std::string caption;
@@ -126,7 +126,7 @@ class TextureTerrain: public Texture
 {
 public:
 
-	int num_dim = 1;
+	int32_t num_dim = 1;
 	uint8_t minimap_color = 0;
 
 	TextureTerrain(const char* c, int id, int dims, Palette* p, uint8_t color=0):
@@ -193,8 +193,8 @@ class TextureObject : public Texture
 {
 public:
 
-	int frames_per_angles = 1;
-	int directions = 1;
+	int32_t frames_per_angles = 1;
+	int32_t directions = 1;
 	float anim_duration;
 
 	TextureObject(const char* c, int id, Palette* p, int fpa=1, int dirs=0, float dur=0.0):
